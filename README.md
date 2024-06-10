@@ -2,11 +2,8 @@
 
 ## Project Description
 <!-- you can include known bugs, design decisions, external references used... -->
+Working chatroom utilizing mongoDB
 
-## Ethics Questions
+## How to run
+npm run start
 
-### Question 1
-
-> Give two possible chatroom moderation features and the reasons that you should implement each one
-
-<!-- Put your answer to question 1 here -->
