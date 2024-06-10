@@ -97,3 +97,14 @@ h1{
     visibility: hidden;
     padding-right:10px;
 }
+
+.login-button {
+    background-color: #3D52A0;
+    margin-top: 10%;
+}
+
+
+.link {
+    text-decoration: none;
+    color: white;
+}

@@ -3,16 +3,10 @@ const User = require("../models/User");
 const Chatroom = require("../models/chatroom");
 var GoogleStrategy = require( 'passport-google-oauth2' ).Strategy;
 
-
-const uri = "mongodb+srv://isaiahpb:cs110project@cluster0.uzg09ev.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const clientOptions = { 
-    serverApi: { version: '1', strict: true, deprecationErrors: true }
-};
-
 module.exports = function(passport) {
     passport.use(new GoogleStrategy({
-      clientID:     GOOGLE_CLIENT_ID,
-      clientSecret: GOOGLE_CLIENT_SECRET,
+      clientID:     process.env.GOOGLE_CLIENT_ID_ENV,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET_ENV,
       callbackURL: "http://localhost:8080/auth/google/callback",
       passReqToCallback   : true
     },

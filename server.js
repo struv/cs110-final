@@ -4,10 +4,13 @@ const cookieParser = require('cookie-parser');
 const hbs = require('express-handlebars');
 const session = require('express-session');
 const path = require('path');
+const dotenv = require('dotenv')
 const mongoose = require("mongoose");
 const cors = require('cors');
 const passport = require('passport');
+const MongoStore = require('connect-mongo')(session);
 
+const {ensureAuth, ensureGuest} = require('./middleware/auth');
 
 //Import handlers
 const homeHandler = require('./controllers/home.js');
@@ -23,11 +26,14 @@ const nicknameHandler = require('./controllers/nickname.js');
 const app = express();
 const port = 8080;
 
+// Dotenv config
+dotenv.config({ path: './config/config.env' })
+
+
 // Passport config
 require('./config/passport.js')(passport)
 
 //MongoDB connection string and options
-const uri = "mongodb+srv://isaiahpb:cs110project@cluster0.uzg09ev.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const clientOptions = { 
     serverApi: { version: '1', strict: true, deprecationErrors: true }
 };
@@ -38,14 +44,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
 app.use(nicknameHandler);
 
 //Login middleware
 app.use(session ({
-    secret: 'keyboard cat',
+    cookie: {maxAge: 360000},
+    secret: 'sess',
     resave: false,
     saveUninitialized: false,
+    store: new MongoStore({ mongooseConnection: mongoose.connection })
 }))
 app.use(passport.initialize());
 app.use(passport.session());
@@ -94,17 +101,16 @@ app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layout', layoutsDir: __di
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
+// Create controller handlers to handle requests at each endpoint
+app.use('/auth', require('./routes/auth.js'));
 
-mongoose.connect(uri, clientOptions)
+mongoose.connect(process.env.MONGO_URI, clientOptions)
     .then(() => {
         console.log("Connected to MongoDB");
 
-        // Create controller handlers to handle requests at each endpoint
-        app.use('/auth', require('./routes/auth.js'));
+        app.get('/', ensureGuest, loginHandler.getLogin);
 
-        app.get('/', loginHandler.getLogin);
-
-        app.get('/home', homeHandler.getHome);
+        app.get('/home', ensureAuth, homeHandler.getHome);
 
         app.get('/:roomName', roomHandler.getRoom);
 
@@ -147,11 +153,7 @@ mongoose.connect(uri, clientOptions)
     })
     .catch(err => {
         console.error('Failed to connect to MongoDB', err);
-    });
-// set up stylesheets route
-
-
-// TODO: Add server side code
+});
 
 
 

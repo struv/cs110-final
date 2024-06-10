@@ -237,4 +237,7 @@ $RECYCLE.BIN/
 #user
 *.zip
 
+# keys
+config/config.env
+
 # End of https://www.gitignore.io/api/windows
