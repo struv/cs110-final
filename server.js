@@ -6,12 +6,15 @@ const session = require('express-session');
 const path = require('path');
 const mongoose = require("mongoose");
 const cors = require('cors');
+const passport = require('passport');
+
 
 //Import handlers
 const homeHandler = require('./controllers/home.js');
 const roomHandler = require('./controllers/room.js');
 const nickHandler = require('./controllers/nick.js');
 const msgHandler = require('./controllers/message.js');
+const loginHandler = require('./controllers/login.js');
 const { roomIdGenerator } = require('./util/roomIdGenerator.js');
 const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
 const Room = require('./models/chatroom.js');
@@ -20,8 +23,11 @@ const nicknameHandler = require('./controllers/nickname.js');
 const app = express();
 const port = 8080;
 
+// Passport config
+require('./config/passport.js')(passport)
+
 //MongoDB connection string and options
-const uri = "mongodb+srv://ahan058:DHXXha0ZrqiVCKcT@cluster0.hj10yd6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://isaiahpb:cs110project@cluster0.uzg09ev.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const clientOptions = { 
     serverApi: { version: '1', strict: true, deprecationErrors: true }
 };
@@ -34,6 +40,17 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
 app.use(nicknameHandler);
+
+//Login middleware
+app.use(session ({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: false,
+}))
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
 
 //View engine setup
 const hbsOptions = {
@@ -77,16 +94,20 @@ app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layout', layoutsDir: __di
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
+
 mongoose.connect(uri, clientOptions)
     .then(() => {
         console.log("Connected to MongoDB");
 
         // Create controller handlers to handle requests at each endpoint
-        
-        app.get('/', homeHandler.getHome);
+        app.use('/auth', require('./routes/auth.js'));
+
+        app.get('/', loginHandler.getLogin);
+
+        app.get('/home', homeHandler.getHome);
+
         app.get('/:roomName', roomHandler.getRoom);
 
-        
         app.post('/sendMessage', msgHandler.postMessage);
 
 
@@ -131,3 +152,6 @@ mongoose.connect(uri, clientOptions)
 
 
 // TODO: Add server side code
+
+
+
