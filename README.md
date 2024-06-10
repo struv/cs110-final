@@ -1,4 +1,4 @@
-# Assignment4 Concentrator
+# CS110 Final Project - Chatroom
 
 ## Project Description
 <!-- you can include known bugs, design decisions, external references used... -->
