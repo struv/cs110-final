@@ -4,14 +4,20 @@ const cookieParser = require('cookie-parser');
 const hbs = require('express-handlebars');
 const session = require('express-session');
 const path = require('path');
+const dotenv = require('dotenv')
 const mongoose = require("mongoose");
 const cors = require('cors');
+const passport = require('passport');
+const MongoStore = require('connect-mongo')(session);
+
+const {ensureAuth, ensureGuest} = require('./middleware/auth');
 
 //Import handlers
 const homeHandler = require('./controllers/home.js');
 const roomHandler = require('./controllers/room.js');
 const nickHandler = require('./controllers/nick.js');
 const msgHandler = require('./controllers/message.js');
+const loginHandler = require('./controllers/login.js');
 const { roomIdGenerator } = require('./util/roomIdGenerator.js');
 const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
 const Room = require('./models/chatroom.js');
@@ -20,8 +26,14 @@ const nicknameHandler = require('./controllers/nickname.js');
 const app = express();
 const port = 8080;
 
+// Dotenv config
+dotenv.config({ path: './config/config.env' })
+
+
+// Passport config
+require('./config/passport.js')(passport)
+
 //MongoDB connection string and options
-const uri = "mongodb+srv://ahan058:DHXXha0ZrqiVCKcT@cluster0.hj10yd6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const clientOptions = { 
     serverApi: { version: '1', strict: true, deprecationErrors: true }
 };
@@ -32,8 +44,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
 app.use(nicknameHandler);
+
+//Login middleware
+app.use(session ({
+    cookie: {maxAge: 360000},
+    secret: 'sess',
+    resave: false,
+    saveUninitialized: false,
+    store: new MongoStore({ mongooseConnection: mongoose.connection })
+}))
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
 
 //View engine setup
 const hbsOptions = {
@@ -77,16 +101,19 @@ app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layout', layoutsDir: __di
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
-mongoose.connect(uri, clientOptions)
+// Create controller handlers to handle requests at each endpoint
+app.use('/auth', require('./routes/auth.js'));
+
+mongoose.connect(process.env.MONGO_URI, clientOptions)
     .then(() => {
         console.log("Connected to MongoDB");
 
-        // Create controller handlers to handle requests at each endpoint
-        
-        app.get('/', homeHandler.getHome);
+        app.get('/', ensureGuest, loginHandler.getLogin);
+
+        app.get('/home', ensureAuth, homeHandler.getHome);
+
         app.get('/:roomName', roomHandler.getRoom);
 
-        
         app.post('/sendMessage', msgHandler.postMessage);
 
 
@@ -126,8 +153,7 @@ mongoose.connect(uri, clientOptions)
     })
     .catch(err => {
         console.error('Failed to connect to MongoDB', err);
-    });
-// set up stylesheets route
+});
 
 
-// TODO: Add server side code
+
