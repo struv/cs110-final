@@ -9,6 +9,7 @@ const mongoose = require("mongoose");
 const cors = require('cors');
 const passport = require('passport');
 const MongoStore = require('connect-mongo')(session);
+const {check, validationResult} = require('express-validator')
 
 const {ensureAuth, ensureGuest} = require('./middleware/auth');
 
@@ -18,10 +19,13 @@ const roomHandler = require('./controllers/room.js');
 const nickHandler = require('./controllers/nick.js');
 const msgHandler = require('./controllers/message.js');
 const loginHandler = require('./controllers/login.js');
+const profileHandler = require('./controllers/profile.js');
 const { roomIdGenerator } = require('./util/roomIdGenerator.js');
 const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
 const Room = require('./models/chatroom.js');
+const User = require('./models/user.js');
 const nicknameHandler = require('./controllers/nickname.js');
+const { findOneAndUpdate } = require('./models/user');
 
 const app = express();
 const port = 8080;
@@ -38,14 +42,6 @@ const clientOptions = {
     serverApi: { version: '1', strict: true, deprecationErrors: true }
 };
 
-//Middleware setup
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(nicknameHandler);
-
 //Login middleware
 app.use(session ({
     cookie: {maxAge: 360000},
@@ -56,6 +52,15 @@ app.use(session ({
 }))
 app.use(passport.initialize());
 app.use(passport.session());
+
+
+//Middleware setup
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(nicknameHandler);
 
 // Routes
 
@@ -110,14 +115,35 @@ mongoose.connect(process.env.MONGO_URI, clientOptions)
 
         app.get('/', ensureGuest, loginHandler.getLogin);
 
+        app.get('/profile', ensureAuth, profileHandler.getProfile);
+
+        app.post('/subProfile', ensureAuth,[
+            check('fname').matches(/^[A-Za-z\s]+$/).withMessage('First name must be alphabetic.').trim().escape(), 
+
+            check('lname').matches(/^[A-Za-z\s]+$/).withMessage('Last name must be alphabetic.').trim().escape(), 
+
+            check('aboutme').optional().trim().escape()
+            ], async (req, res) => {
+                let userID = req.session.passport.user;
+                let actual = await User.findById(userID);
+                let errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    res.render('profile', {firstName: actual.firstName, lastName: actual.lastName, errors: errors.array()});
+                }
+                else {
+                    if(actual.firstName !== req.body.fname) await User.findOneAndUpdate({_id: userID}, {firstName: req.body.fname});
+                    if(actual.lastName !== req.body.lname) await User.findOneAndUpdate({_id: userID}, {lastName: req.body.lastName});
+                    if(actual.lastName !== req.body.aboutme) await User.findOneAndUpdate({_id: userID}, {aboutMe: req.body.aboutme});
+    
+                    res.redirect('/home');
+                }
+        });
+
         app.get('/home', ensureAuth, homeHandler.getHome);
 
-        app.get('/:roomName', roomHandler.getRoom);
+        app.post('/sendMessage', ensureAuth, msgHandler.postMessage);
 
-        app.post('/sendMessage', msgHandler.postMessage);
-
-
-        app.post("/create", async (req, res) => {
+        app.post("/create", ensureAuth, async (req, res) => {
             const roomName = req.body.roomName;
             req.session.nickname = req.body.nickname;
 
@@ -148,6 +174,8 @@ mongoose.connect(process.env.MONGO_URI, clientOptions)
                 res.status(500).send('Internal server error.');
             }
         });
+
+        app.get('/:roomName', ensureAuth, roomHandler.getRoom);
 
         app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
     })

@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
     firstName: {type:String, required: true}, 
     lastName: {type:String, required: true}, 
     image: {type:String}, 
+    aboutMe: {type:String}, 
     createdAt: { type: Date, default: Date.now}
 }, { versionKey: false });
 

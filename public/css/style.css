@@ -108,3 +108,12 @@ h1{
     text-decoration: none;
     color: white;
 }
+
+.profile {
+    margin-top: 10%;
+}
+
+#fname, #lname {
+    margin: 10px;
+}
+
