@@ -1,0 +1,22 @@
+<div class="header">
+    <div class="rm-title">
+        <h1>Welcome</h1>
+    </div>
+</div>
+
+{{#if errors}}
+  <div class="error">
+    {{#each errors}}
+      <h3>{{msg}}</h3>
+    {{/each}}
+  </div>
+{{/if}}
+
+<form class="profile" action="/subProfile" method="POST">
+  <label for="fname">First name:</label>
+  <input type="text" id="fname" name="fname" value={{firstName}}><br>
+  <label for="lname">Last name:</label>
+  <input type="text" id="lname" name="lname" value={{lastName}}><br>
+  <textarea id="aboutme" name="aboutme" rows="4" cols="50" placeholder="About me ... " value={{aboutMe}}></textarea><br><br>
+  <input type="submit" value="Confirm">
+</form> 

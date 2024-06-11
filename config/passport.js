@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const User = require("../models/User");
 const Chatroom = require("../models/chatroom");
+const User = require('../models/user.js');
 var GoogleStrategy = require( 'passport-google-oauth2' ).Strategy;
 
 module.exports = function(passport) {
@@ -18,7 +18,8 @@ module.exports = function(passport) {
         googleID: profile.id,
         firstName: profile.name.givenName,
         lastName: profile.name.familyName,
-        image: profile.photos[0].value
+        image: profile.photos[0].value,
+        aboutMe: ""
       }
 
       try {
