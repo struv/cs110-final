@@ -10,6 +10,10 @@ h1{
     font-weight: normal;
 }
 
+input{
+    margin: 10px;
+}
+
 .room-container {
     font-size: 18px;
 }
