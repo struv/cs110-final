@@ -48,14 +48,26 @@
     {{#each messages}}
         <div class="message-cont">
             {{#if (lookup ../highlight @index)}}
+                <div>
                 {{#each this}}
                     <strong>{{nickname}} <span class="highlight">{{text}}</span> <em>{{timestamp}}</em>
                 {{/each}}
+                 </div>
+                 <div>
+                  <button class="blue-btn" action="edit-text">Edit</button>
+                  <button class="blue-btn" action="delete-text">Delete</button>
+                 </div>
             {{else}}
+                <div>
                 {{#each this}}
                     <strong>{{nickname}}  {{text}} <em>{{timestamp}}</em>
                 {{/each}}
+                </div>
+                <div>
+                <button class="blue-btn" action="edit-text">Edit</button>
+                <button class="blue-btn" action="delete-text">Delete</button>
+                </div>
             {{/if}}
-        </div>
+        </div>  
     {{/each}}
 </div>
