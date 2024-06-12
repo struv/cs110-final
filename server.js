@@ -5,6 +5,7 @@ const hbs = require('express-handlebars');
 const session = require('express-session');
 const path = require('path');
 const dotenv = require('dotenv')
+const handlebars = require('handlebars');
 const mongoose = require("mongoose");
 const cors = require('cors');
 const passport = require('passport');
@@ -19,13 +20,14 @@ const roomHandler = require('./controllers/room.js');
 const nickHandler = require('./controllers/nick.js');
 const msgHandler = require('./controllers/message.js');
 const loginHandler = require('./controllers/login.js');
+const roomGenerator = require('./util/roomIdGenerator.js');
 const profileHandler = require('./controllers/profile.js');
 const { roomIdGenerator } = require('./util/roomIdGenerator.js');
 const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
 const Room = require('./models/chatroom.js');
 const User = require('./models/user.js');
+const Message = require('./models/msg.js');
 const nicknameHandler = require('./controllers/nickname.js');
-const { findOneAndUpdate } = require('./models/user');
 
 const app = express();
 const port = 8080;
@@ -142,6 +144,28 @@ mongoose.connect(process.env.MONGO_URI, clientOptions)
         app.get('/home', ensureAuth, homeHandler.getHome);
 
         app.post('/sendMessage', ensureAuth, msgHandler.postMessage);
+
+        app.post('/:roomName/searchMessage', ensureAuth, async (req, res) => {
+            let searchFor = req.body.searchFor;
+            let roomNm = req.params.roomName;
+
+            const messages = await Message.find({roomId:roomNm}).sort({ timestamp: -1 });
+
+            let highlight = new Array(messages.length);
+            for(let i = 0; i < messages.length; i++) {
+                let isIn = messages[i].text.indexOf(searchFor) 
+                if(isIn != -1) {
+                    highlight[i] = 1;
+                } 
+                else {
+                    highlight[i] = 0;
+                }
+            }
+
+            if(searchFor === '') res.render('room', { title: 'chatroom', search: "/"+roomNm+"/searchMessage", highlight: 0, roomName: roomNm, newRoomId: roomGenerator.roomIdGenerator(), messages: messages });
+            else res.render('room', { title: 'chatroom', search: "/"+roomNm+"/searchMessage", highlight: highlight, roomName: roomNm, newRoomId: roomGenerator.roomIdGenerator(), messages: messages });
+            
+        });
 
         app.post("/create", ensureAuth, async (req, res) => {
             const roomName = req.body.roomName;
