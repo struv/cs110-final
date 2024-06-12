@@ -117,6 +117,10 @@ input{
     margin-top: 10%;
 }
 
+.blue-btn{
+    background-color: #3D52A0;
+}
+
 #fname, #lname {
     margin: 10px;
 }
