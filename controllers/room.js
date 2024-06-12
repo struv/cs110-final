@@ -23,7 +23,7 @@ async function getRoom(req, res){
 
         const messages= await Message.find({roomId:roomName}).sort({ timestamp: -1 });
         console.log('Fetched messages:', messages);
-        res.render('room', { title: 'chatroom', roomName: room.name, newRoomId: roomGenerator.roomIdGenerator(), messages: messages });
+        res.render('room', { title: 'chatroom', search: "/"+room.name+"/searchMessage", roomName: room.name, newRoomId: roomGenerator.roomIdGenerator(), messages: messages });
         /*messages.forEach((message, index) => {
             console.log(`Message ${index + 1}:`);
             console.log(`Nickname: ${message.nickname}`);

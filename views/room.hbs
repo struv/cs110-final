@@ -23,6 +23,11 @@
 </div>
 
 <div class="room-container">
+
+        <form action={{search}} method="POST">
+            <input type="text" name="searchFor" placeholder="Text search"/>
+            <button type="submit">Search</button>
+        </form>
     
         <div class="input-div">
         <form action="/set-nickname" method="POST">
@@ -42,9 +47,15 @@
 
     {{#each messages}}
         <div class="message-cont">
-            {{#each this}}
-                <strong>{{nickname}} </strong> {{text}} <em>{{timestamp}}</em>
-            {{/each}}
+            {{#if (lookup ../highlight @index)}}
+                {{#each this}}
+                    <strong>{{nickname}} <span class="highlight">{{text}}</span> <em>{{timestamp}}</em>
+                {{/each}}
+            {{else}}
+                {{#each this}}
+                    <strong>{{nickname}}  {{text}} <em>{{timestamp}}</em>
+                {{/each}}
+            {{/if}}
         </div>
     {{/each}}
 </div>

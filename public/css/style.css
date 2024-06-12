@@ -1,3 +1,7 @@
+html {
+    scroll-behavior: smooth;
+}
+
 body{
     margin: 0px;
     background-color: #ADBBDA;
@@ -117,3 +121,6 @@ h1{
     margin: 10px;
 }
 
+.highlight {
+    background-color: rgb(253,255,50);
+}
